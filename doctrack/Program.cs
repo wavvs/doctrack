@@ -55,13 +55,12 @@ namespace doctrack
                         h.AdditionalNewLineAfterOption = false;
                         h.AddDashesToOption = true;
                         h.AutoVersion = false;
+                        h.Heading = "Tool to manipulate and insert tracking pixels into Office Open XML documents.";
                         return CommandLine.Text.HelpText.DefaultParsingErrorsHandler(result, h);
                     }, e => e, true);
                     Console.WriteLine(helpText);
                     return 1;
                 });
-
-            return 0;
         }   
 
         static int RunOptions(Options opts)
@@ -106,28 +105,26 @@ namespace doctrack
                     var obj = JObject.Parse(File.ReadAllText(opts.Metadata));
                     Utils.ModifyMetadata(package, obj);
                 }
-                if (string.IsNullOrEmpty(opts.Url))
+                if (!string.IsNullOrEmpty(opts.Url))
                 {
-                    Console.Error.WriteLine("[Error] Specify -u, --url.");
-                    return 1;
-                }
-                if (opts.Template)
-                {
-                    WordprocessingDocument document = (WordprocessingDocument)package;
-                    document.InsertTemplateURI(opts.Url);
-                }
-                else
-                {
-                    string name = package.GetType().Name;
-                    if (name == "WordprocessingDocument")
+                    if (opts.Template)
                     {
                         WordprocessingDocument document = (WordprocessingDocument)package;
-                        document.InsertTrackingURI(opts.Url);
+                        document.InsertTemplateURI(opts.Url);
                     }
-                    else if (name == "SpreadsheetDocument")
+                    else
                     {
-                        Console.Error.WriteLine("#TODO");
-                        return 1;
+                        string name = package.GetType().Name;
+                        if (name == "WordprocessingDocument")
+                        {
+                            WordprocessingDocument document = (WordprocessingDocument)package;
+                            document.InsertTrackingURI(opts.Url);
+                        }
+                        else if (name == "SpreadsheetDocument")
+                        {
+                            Console.Error.WriteLine("#TODO");
+                            return 1;
+                        }
                     }
                 }
                 if (string.IsNullOrEmpty(opts.Output))
@@ -172,10 +169,18 @@ namespace doctrack
         static int RunInspect(OpenXmlPackage package)
         {
             var rels = Utils.InspectExternalRelationships(package);
-            Console.WriteLine("External targets:");
+            Console.WriteLine("[External targets]");
             foreach (var rel in rels)
             {
-                Console.WriteLine(String.Format("Part: {0}\nID: {1}\nURI: {2}\n", rel.Container, rel.Id, rel.Uri));
+                var part = rel.Container.ToString().Split('.');
+                Console.WriteLine(String.Format("Part: {0}, ID: {1}, URI: {2}", part[part.Length-1], rel.Id, rel.Uri));
+            }
+
+            Console.WriteLine("[Metadata]");
+            var propInfo = package.PackageProperties.GetType().GetProperties();
+            foreach (var info in propInfo)
+            {
+                Console.WriteLine("{0}: {1}", info.Name, info.GetValue(package.PackageProperties));
             }
             return 0;
         }
