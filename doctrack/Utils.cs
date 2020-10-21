@@ -6,6 +6,7 @@ using System;
 using System.Linq;
 using System.Reflection;
 using System.Collections.Generic;
+using System.IO.Packaging;
 
 namespace doctrack
 {
@@ -60,25 +61,24 @@ namespace doctrack
             }
         }
 
-        public static List<ExternalRelationship> InspectExternalRelationships(OpenXmlPackage package)
+        public static List<PackageRelationship> InspectExternalRelationships(OpenXmlPackage package)
         {
-            List<ExternalRelationship> extRels = new List<ExternalRelationship>();
-            foreach (var part in package.Parts)
+            var packageRels = new List<PackageRelationship>();
+            foreach (var part in package.Package.GetParts())
             {
-                foreach (var rels in part.OpenXmlPart.ExternalRelationships)
+                if (!part.Uri.ToString().EndsWith(".rels"))
                 {
-                    extRels.Add(rels);
+                    var rels = part.GetRelationships();
+                    foreach (var rel in rels)
+                    {
+                        if (rel.TargetMode == TargetMode.External)
+                        {
+                            packageRels.Add(rel);
+                        }
+                    }
                 }
             }
-
-            foreach (var part in package.RootPart.Parts)
-            {
-                foreach (var rels in part.OpenXmlPart.ExternalRelationships)
-                {
-                    extRels.Add(rels);
-                }
-            }
-            return extRels;
+            return packageRels;
         }
     }
 }

@@ -77,7 +77,7 @@ namespace doctrack
                 }
                 if (string.IsNullOrEmpty(opts.Type))
                 {
-                    Console.Error.WriteLine("[Error] Specify -t, --type.");
+                    Console.Error.WriteLine("[Error] Specify -t, --type. Just use either Document or Workbook if you want to insert URLs.");
                     return 1;
                 }
                 switch (opts.Type)
@@ -86,13 +86,19 @@ namespace doctrack
                     case "MacroEnabledDocument":
                     case "MacroEnabledTemplate":
                     case "Template":
-                        package = WordprocessingDocument.Open(opts.Input, true, new OpenSettings() { AutoSave = false });
+                        using (var document = WordprocessingDocument.Open(opts.Input, false))
+                        {
+                            package = document.Clone();
+                        }
                         break;
                     case "Workbook":
                     case "MacroEnabledWorkbook":
                     case "MacroEnabledTemplateX":
                     case "TemplateX":
-                        package = SpreadsheetDocument.Open(opts.Input, true, new OpenSettings() { AutoSave = false });
+                        using (var document = SpreadsheetDocument.Open(opts.Input, false))
+                        {
+                            package = document.Clone();
+                        }
                         break;
                     default:
                         Console.Error.WriteLine("[Error] Specify correct document type, use --list-types to view types.");
@@ -133,22 +139,8 @@ namespace doctrack
                     return 1;
                 }
 
-                if (opts.Input == opts.Output)
-                {
-                    if (OpenXmlPackage.CanSave)
-                    {
-                        package.Save();
-                    }
-                    else
-                    {
-                        var clone = package.Clone();
-                        clone.SaveAs(opts.Output);
-                    }
-                } 
-                else
-                {
-                    package.SaveAs(opts.Output);
-                }
+                package.SaveAs(opts.Output);
+               
             }
             catch (OpenXmlPackageException)
             {
@@ -169,8 +161,7 @@ namespace doctrack
             Console.WriteLine("[External targets]");
             foreach (var rel in rels)
             {
-                var part = rel.Container.ToString().Split('.');
-                Console.WriteLine(String.Format("Part: {0}, ID: {1}, URI: {2}", part[part.Length-1], rel.Id, rel.Uri));
+                Console.WriteLine(String.Format("Part: {0}, ID: {1}, URI: {2}", rel.SourceUri, rel.Id, rel.TargetUri));
             }
 
             Console.WriteLine("[Metadata]");
