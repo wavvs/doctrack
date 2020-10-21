@@ -142,15 +142,12 @@ namespace doctrack
                     else
                     {
                         var clone = package.Clone();
-                        package.Close();
                         clone.SaveAs(opts.Output);
-                        clone.Close();
                     }
                 } 
                 else
                 {
                     package.SaveAs(opts.Output);
-                    package.Close();
                 }
             }
             catch (OpenXmlPackageException)
