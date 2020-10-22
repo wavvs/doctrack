@@ -128,8 +128,8 @@ namespace doctrack
                         }
                         else if (name == "SpreadsheetDocument")
                         {
-                            Console.Error.WriteLine("#TODO");
-                            return 1;
+                            SpreadsheetDocument workbook = (SpreadsheetDocument)package;
+                            workbook.InsertTrackingURI(opts.Url);
                         }
                     }
                 }
