@@ -19,22 +19,34 @@ namespace doctrack
             WorksheetPart wsPart = (WorksheetPart)(wbPart.GetPartById(sheet.Id));
             DrawingsPart drawingsPart;
             if (wsPart.DrawingsPart == null)
+            {
                 drawingsPart = wsPart.AddNewPart<DrawingsPart>();
-
+            }
             else
+            {
                 drawingsPart = wsPart.DrawingsPart;
+            }
             var extRel = drawingsPart.AddExternalRelationship("http://schemas.openxmlformats.org/officeDocument/2006/relationships/image", uri);
             uint id;
             if (drawingsPart.WorksheetDrawing == null)
+            {
                 id = 1;
+            }    
             else
+            {
                 id = Convert.ToUInt32(drawingsPart.WorksheetDrawing.Count()) + 1;
+            }
             Random r = new Random();
             int rInt = r.Next(300, 2000);
             if (wsPart.Worksheet.Elements<Drawing>().Count() == 0)
+            {
                 GenerateDrawingsPart1Content(drawingsPart, extRel.Id, id, rInt, 0, rInt, 0, false);
+            }
             else
+            {
                 GenerateDrawingsPart1Content(drawingsPart, extRel.Id, id, rInt, 0, rInt, 0, true);
+            }
+ 
             wsPart.GetIdOfPart(drawingsPart);
             List<string> drawingsList = new List<string>();
             foreach (var drawing in wsPart.Worksheet.Elements<Drawing>())
@@ -44,7 +56,10 @@ namespace doctrack
             string drPartId = wsPart.GetIdOfPart(drawingsPart);
             Drawing drawingNew = new Drawing() { Id = drPartId };
             if (!drawingsList.Contains(drPartId))
+            {
                 wsPart.Worksheet.Append(drawingNew);
+            }
+                
 
         }
         private static void GenerateDrawingsPart1Content(DrawingsPart drawingsPart1, string relId, uint id, int startRowIndex, int startColumnIndex, int endRowIndex, int endColumnIndex, bool appendToDrawing)
@@ -57,9 +72,10 @@ namespace doctrack
                 worksheetDrawing1.AddNamespaceDeclaration("a", "http://schemas.openxmlformats.org/drawingml/2006/main");
             }    
             else
+            {
                 worksheetDrawing1 = drawingsPart1.WorksheetDrawing;
+            }
                 
-
             xdr.TwoCellAnchor twoCellAnchor1 = new xdr.TwoCellAnchor() { EditAs = xdr.EditAsValues.OneCell };
             xdr.FromMarker fromMarker1 = new xdr.FromMarker();
             xdr.ColumnId columnId1 = new xdr.ColumnId();
@@ -80,11 +96,11 @@ namespace doctrack
             xdr.ColumnId columnId2 = new xdr.ColumnId();
             columnId2.Text = endColumnIndex.ToString();
             xdr.ColumnOffset columnOffset2 = new xdr.ColumnOffset();
-            columnOffset2.Text = "10";
+            columnOffset2.Text = "0";
             xdr.RowId rowId2 = new xdr.RowId();
             rowId2.Text = endRowIndex.ToString();
             xdr.RowOffset rowOffset2 = new xdr.RowOffset();
-            rowOffset2.Text = "10";
+            rowOffset2.Text = "0";
 
             toMarker1.Append(columnId2);
             toMarker1.Append(columnOffset2);
@@ -95,7 +111,6 @@ namespace doctrack
             xdr.NonVisualPictureProperties nonVisualPictureProperties1 = new xdr.NonVisualPictureProperties();
             xdr.NonVisualDrawingProperties nonVisualDrawingProperties1 = new xdr.NonVisualDrawingProperties()
             {
-                
                 Id = (UInt32Value)id,
                 Name = Guid.NewGuid().ToString()
             };
@@ -151,7 +166,9 @@ namespace doctrack
             twoCellAnchor1.Append(clientData1);
             worksheetDrawing1.Append(twoCellAnchor1);
             if (!appendToDrawing)
+            {
                 drawingsPart1.WorksheetDrawing = worksheetDrawing1;
+            }
         }
     }
 
