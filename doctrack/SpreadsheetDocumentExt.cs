@@ -40,11 +40,11 @@ namespace doctrack
             int rInt = r.Next(300, 2000);
             if (wsPart.Worksheet.Elements<Drawing>().Count() == 0)
             {
-                GenerateDrawingsPart1Content(drawingsPart, extRel.Id, id, rInt, 0, rInt, 0, false);
+                GenerateDrawingsPart1Content(drawingsPart, extRel.Id, id, rInt, 0, rInt, 0, false, 0, 0);
             }
             else
             {
-                GenerateDrawingsPart1Content(drawingsPart, extRel.Id, id, rInt, 0, rInt, 0, true);
+                GenerateDrawingsPart1Content(drawingsPart, extRel.Id, id, rInt, 0, rInt, 0, true, 0, 0);
             }
  
             wsPart.GetIdOfPart(drawingsPart);
@@ -62,7 +62,7 @@ namespace doctrack
                 
 
         }
-        private static void GenerateDrawingsPart1Content(DrawingsPart drawingsPart1, string relId, uint id, int startRowIndex, int startColumnIndex, int endRowIndex, int endColumnIndex, bool appendToDrawing)
+        private static void GenerateDrawingsPart1Content(DrawingsPart drawingsPart1, string relId, uint id, int startRowIndex, int startColumnIndex, int endRowIndex, int endColumnIndex, bool appendToDrawing, int width, int height)
         {
             xdr.WorksheetDrawing worksheetDrawing1;
             if (!appendToDrawing)
@@ -141,8 +141,13 @@ namespace doctrack
             xdr.ShapeProperties shapeProperties1 = new xdr.ShapeProperties();
 
             A.Transform2D transform2D1 = new A.Transform2D();
-            A.Offset offset1 = new A.Offset() { X = 1828800L, Y = 762000L };
-            A.Extents extents1 = new A.Extents() { Cx = 952500L, Cy = 952500L };
+            A.Offset offset1 = new A.Offset() { X = 0L, Y = 0L };
+            A.Extents extents1 = new A.Extents()
+            {
+                Cx = (int)Math.Round((decimal)width * 9525),
+                Cy = (int)Math.Round((decimal)height * 9525)
+
+            };
 
             transform2D1.Append(offset1);
             transform2D1.Append(extents1);
