@@ -12,6 +12,7 @@ namespace doctrack
 {
     static class Utils
     {
+        // TODO: Cannot change metadata on files created by LibreOffice.
         public static void ModifyMetadata(OpenXmlPackage package, JObject metadata)
         {
             string[] props = {
@@ -61,8 +62,9 @@ namespace doctrack
             }
         }
 
+        // TODO: /word/footnotes.xml shows useless info.
         public static List<PackageRelationship> InspectExternalRelationships(OpenXmlPackage package)
-        {
+        {   
             var packageRels = new List<PackageRelationship>();
             foreach (var part in package.Package.GetParts())
             {

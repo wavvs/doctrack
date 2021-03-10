@@ -20,7 +20,7 @@ namespace doctrack
             [Option('o', "output", HelpText = "Output filename.")]
             public string Output { get; set; }
 
-            [Option('m', "metadata", HelpText = "Metadata to supply (json file)")]
+            [Option('m', "metadata", HelpText = "Metadata to supply (json file).")]
             public string Metadata { get; set; }
             
             [Option('u', "url", HelpText = "URL to insert.")]
@@ -28,12 +28,6 @@ namespace doctrack
 
             [Option('e', "template", Default = false, HelpText = "If set, enables template URL injection.")]
             public bool Template { get; set; }
-
-            [Option('t', "type", HelpText = "Document type. If --input is not specified, creates new document and saves as --output.")]
-            public string Type { get; set; }
-
-            [Option('l', "list-types", Default = false, HelpText = "Lists available types for document creation.")]
-            public bool ListTypes { get; set; }
 
             [Option('s', "inspect", Default = false, HelpText = "Inspect external targets.")]
             public bool Inspect { get; set; }
@@ -55,7 +49,7 @@ namespace doctrack
                         h.AdditionalNewLineAfterOption = false;
                         h.AddDashesToOption = true;
                         h.AutoVersion = false;
-                        h.Heading = "Tool to manipulate and insert tracking pixels into Office Open XML documents.";
+                        h.Heading = "Tool to insert tracking pixels into Office Open XML documents.";
                         return CommandLine.Text.HelpText.DefaultParsingErrorsHandler(result, h);
                     }, e => e, true);
                     Console.WriteLine(helpText);
@@ -65,62 +59,67 @@ namespace doctrack
 
         static int RunOptions(Options opts)
         {
-            if (opts.ListTypes) return RunListTypes();
-
             try
             {
                 OpenXmlPackage package;
-                if (string.IsNullOrEmpty(opts.Input))
+                if (!File.Exists(opts.Input))
                 {
-                    Console.Error.WriteLine("#TODO");
+                    Console.Error.WriteLine("[Error] Specify -i,--input.");
                     return 1;
                 }
-                if (string.IsNullOrEmpty(opts.Type))
+
+                var documentType = Path.GetExtension(opts.Input);
+                switch (documentType)
                 {
-                    Console.Error.WriteLine("[Error] Specify -t, --type. Just use either Document or Workbook if you want to insert URLs.");
-                    return 1;
-                }
-                switch (opts.Type)
-                {
-                    case "Document":
-                    case "MacroEnabledDocument":
-                    case "MacroEnabledTemplate":
-                    case "Template":
+                    case ".docx":
+                    case ".docm":
+                    case ".dotm":
+                    case ".dotx":
                         using (var document = WordprocessingDocument.Open(opts.Input, false))
                         {
                             package = document.Clone();
                         }
                         break;
-                    case "Workbook":
-                    case "MacroEnabledWorkbook":
-                    case "MacroEnabledTemplateX":
-                    case "TemplateX":
+                    case ".xlsx":
+                    case ".xlsm":
+                    case ".xltm":
+                    case ".xltx":
                         using (var document = SpreadsheetDocument.Open(opts.Input, false))
                         {
                             package = document.Clone();
                         }
                         break;
                     default:
-                        Console.Error.WriteLine("[Error] Specify correct document type, use --list-types to view types.");
-                        return 1;
+                        throw new OpenXmlPackageException();
                 }
 
                 if (opts.Inspect) return RunInspect(package);
+
                 if (File.Exists(opts.Metadata))
                 {
                     var obj = JObject.Parse(File.ReadAllText(opts.Metadata));
                     Utils.ModifyMetadata(package, obj);
                 }
+
                 if (!string.IsNullOrEmpty(opts.Url))
                 {
+                    string name = package.GetType().Name;
+                    // TODO: Is it possible to inject templates into xlsx?
                     if (opts.Template)
                     {
-                        WordprocessingDocument document = (WordprocessingDocument)package;
-                        document.InsertTemplateURI(opts.Url);
+                        if (name == "WordprocessingDocument")
+                        {
+                            WordprocessingDocument document = (WordprocessingDocument)package;
+                            document.InsertTemplateURI(opts.Url);
+                        }
+                        else
+                        {
+                            Console.Error.WriteLine("[Error] Not supported.");
+                            return 1;
+                        }
                     }
                     else
                     {
-                        string name = package.GetType().Name;
                         if (name == "WordprocessingDocument")
                         {
                             WordprocessingDocument document = (WordprocessingDocument)package;
@@ -133,6 +132,7 @@ namespace doctrack
                         }
                     }
                 }
+
                 if (string.IsNullOrEmpty(opts.Output))
                 {
                     Console.Error.WriteLine("[Error] Specify -o, --output.");
@@ -144,7 +144,7 @@ namespace doctrack
             }
             catch (OpenXmlPackageException)
             {
-                Console.Error.WriteLine("[Error] Document type mismatch.");
+                Console.Error.WriteLine("[Error] Document type mismatch. Provide correct Office Open XML file.");
                 return 1;
             }
             catch (Exception e)
@@ -170,21 +170,6 @@ namespace doctrack
             {
                 Console.WriteLine("{0}: {1}", info.Name, info.GetValue(package.PackageProperties));
             }
-            return 0;
-        }
-
-        static int RunListTypes()
-        {
-            StringBuilder sb = new StringBuilder();
-            sb.Append("Document              (*.docx)\n");
-            sb.Append("MacroEnabledDocument  (*.docm)\n");
-            sb.Append("MacroEnabledTemplate  (*.dotm)\n");
-            sb.Append("Template              (*.dotx)\n");
-            sb.Append("Workbook              (*.xlsx)\n");
-            sb.Append("MacroEnabledWorkbook  (*.xlsm)\n");
-            sb.Append("MacroEnabledTemplateX (*.xltm)\n");
-            sb.Append("TemplateX             (*.xltx)\n");
-            Console.Write(sb.ToString());
             return 0;
         }
     }
