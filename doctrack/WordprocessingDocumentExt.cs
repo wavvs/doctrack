@@ -1,11 +1,13 @@
 ﻿using System;
+using System.IO;
+using System.Linq;
 using DocumentFormat.OpenXml;
 using DocumentFormat.OpenXml.Packaging;
 using DocumentFormat.OpenXml.Wordprocessing;
 using A = DocumentFormat.OpenXml.Drawing;
 using DW = DocumentFormat.OpenXml.Drawing.Wordprocessing;
 using PIC = DocumentFormat.OpenXml.Drawing.Pictures;
-using System.Linq;
+
 
 namespace doctrack
 {
@@ -35,6 +37,15 @@ namespace doctrack
                 id = docProp.Max(element => element.Id.Value);
             var element = GetPictureElement(extRel.Id, Guid.NewGuid().ToString(), id + 1, 0, 0);
             document.MainDocumentPart.Document.Body.AppendChild(new Paragraph(new Run(element)));
+        }
+
+        public static void AddCustomPart(this WordprocessingDocument document, Stream xml)
+        {
+            MainDocumentPart mainDocumentPart = document.MainDocumentPart;
+            CustomXmlPart customXmlPart = mainDocumentPart.AddCustomXmlPart(CustomXmlPartType.CustomXml);
+            CustomXmlPropertiesPart customXmlPropertiesPart = customXmlPart.AddNewPart<CustomXmlPropertiesPart>();
+            customXmlPropertiesPart.DataStoreItem = Utils.GenerateCustomXMLProperties();
+            customXmlPart.FeedData(xml);
         }
 
         private static Drawing GetPictureElement(string rId, string picname, uint id, int width, int height)

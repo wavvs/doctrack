@@ -1,11 +1,13 @@
 using System;
+using System.IO;
+using System.Linq;
 using System.Collections.Generic;
 using DocumentFormat.OpenXml;
 using DocumentFormat.OpenXml.Packaging;
 using DocumentFormat.OpenXml.Spreadsheet;
 using A = DocumentFormat.OpenXml.Drawing;
 using xdr = DocumentFormat.OpenXml.Drawing.Spreadsheet;
-using System.Linq;
+
 
 namespace doctrack
 {
@@ -60,9 +62,17 @@ namespace doctrack
             {
                 wsPart.Worksheet.Append(drawingNew);
             }
-                
-
         }
+
+        public static void AddCustomPart(this SpreadsheetDocument workbook, Stream xml)
+        {
+            WorkbookPart workbookPart = workbook.WorkbookPart;
+            CustomXmlPart customXmlPart = workbookPart.AddCustomXmlPart(CustomXmlPartType.CustomXml);
+            CustomXmlPropertiesPart customXmlPropertiesPart = customXmlPart.AddNewPart<CustomXmlPropertiesPart>();
+            customXmlPropertiesPart.DataStoreItem = Utils.GenerateCustomXMLProperties();
+            customXmlPart.FeedData(xml);
+        }
+
         private static void GenerateDrawingsPart1Content(DrawingsPart drawingsPart1, string relId, uint id, int startRowIndex, int startColumnIndex, int endRowIndex, int endColumnIndex, bool appendToDrawing, int width, int height)
         {
             xdr.WorksheetDrawing worksheetDrawing1;

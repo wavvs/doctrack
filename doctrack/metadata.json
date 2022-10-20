@@ -1,10 +1,10 @@
 ﻿{
     "Category": "",
     "ContentStatus": "",
-    "Creator": "wavvs",
+    "Creator": "",
     "ContentType": "",
     "Created": "2020-10-13T20:20:39+00:00",
-    "Description": "Tool to insert tracking pixels into Office Open XML documents.",
+    "Description": "",
     "Identifier": "",
     "Keywords": "",
     "LastModifiedBy":"",
@@ -13,6 +13,6 @@
     "Modified":"2020-10-13T20:20:39+00:00",
     "Revision":"",
     "Subject":"",
-    "Title":"doctrack",
+    "Title":"",
     "Version":""
 }
