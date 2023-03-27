@@ -11,7 +11,7 @@ namespace doctrack
     {   
         class Options
         {
-            [Option('i', "input", HelpText = "Input filename.")]
+            [Option('i', "input", HelpText = "Input filename. If doesn't exist, new file is created.")]
             public string Input { get; set; }
 
             [Option('o', "output", HelpText = "Output filename. If not set, document is saved as --input file.")]
@@ -63,11 +63,7 @@ namespace doctrack
             try
             {
                 OpenXmlPackage package;
-                if (!File.Exists(opts.Input))
-                {
-                    Console.Error.WriteLine("[Error] Specify -i,--input.");
-                    return 1;
-                }
+                var isFileExist = File.Exists(opts.Input);
 
                 var documentType = Path.GetExtension(opts.Input);
                 switch (documentType)
@@ -76,18 +72,40 @@ namespace doctrack
                     case ".docm":
                     case ".dotm":
                     case ".dotx":
-                        using (var document = WordprocessingDocument.Open(opts.Input, false))
+                        if (isFileExist)
                         {
-                            package = document.Clone();
+                            using (var document = WordprocessingDocument.Open(opts.Input, false))
+                            {
+                                package = document.Clone();
+                            }
+                        } 
+                        else
+                        {
+                            package = WordprocessingDocumentExt.Create(opts.Input, documentType);
+                            if (package is null)
+                            {
+                                throw new OpenXmlPackageException();
+                            }
                         }
                         break;
                     case ".xlsx":
                     case ".xlsm":
                     case ".xltm":
                     case ".xltx":
-                        using (var document = SpreadsheetDocument.Open(opts.Input, false))
+                        if (isFileExist)
                         {
-                            package = document.Clone();
+                            using (var document = SpreadsheetDocument.Open(opts.Input, false))
+                            {
+                                package = document.Clone();
+                            }
+                        }
+                        else
+                        {
+                            package = SpreadsheetDocumentExt.Create(opts.Input, documentType);
+                            if (package is null)
+                            {
+                                throw new OpenXmlPackageException();
+                            }
                         }
                         break;
                     default:
@@ -95,6 +113,7 @@ namespace doctrack
                 }
 
                 if (opts.Inspect) return Utils.RunInspect(package);
+
 
                 if (File.Exists(opts.Metadata))
                 {

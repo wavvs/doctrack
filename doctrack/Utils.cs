@@ -1,6 +1,9 @@
 ﻿using System;
 using System.Linq;
+using System.Xml;
+using System.Text;
 using System.Collections.Generic;
+using System.IO;
 using System.IO.Packaging;
 using DocumentFormat.OpenXml.CustomXmlDataProperties;
 using DocumentFormat.OpenXml.Packaging;
@@ -89,6 +92,23 @@ namespace doctrack
             SchemaReferences schemaReferences = new SchemaReferences();
             dataStoreItem.Append(schemaReferences);
             return dataStoreItem;
+        }
+
+        public static void AddCoreFileProperties(CoreFilePropertiesPart part)
+        {
+            using (var writer = new XmlTextWriter(part.GetStream(FileMode.Create), Encoding.UTF8))
+            {
+                string currentTime = DateTime.Now.ToString("yyyy-MM-ddTHH:mm:ssK");
+                writer.WriteRaw("<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?>\r\n"+
+                    "<cp:coreProperties xmlns:cp=\"http://schemas.openxmlformats.org/package/2006/metadata/core-properties\" "+ 
+                    "xmlns:dc=\"http://purl.org/dc/elements/1.1/\" xmlns:dcterms=\"http://purl.org/dc/terms/\" "+
+                    "xmlns:dcmitype=\"http://purl.org/dc/dcmitype/\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\">"+
+                    "<dc:title></dc:title><dc:subject></dc:subject><dc:creator></dc:creator><cp:keywords></cp:keywords>"+
+                    "<dc:description></dc:description><cp:lastModifiedBy></cp:lastModifiedBy><cp:revision>1</cp:revision>"+
+                    $"<dcterms:created xsi:type=\"dcterms:W3CDTF\">{currentTime}</dcterms:created>"+
+                    $"<dcterms:modified xsi:type=\"dcterms:W3CDTF\">{currentTime}</dcterms:modified></cp:coreProperties>");
+                writer.Flush();
+            }
         }
 
         public static int RunInspect(OpenXmlPackage package)

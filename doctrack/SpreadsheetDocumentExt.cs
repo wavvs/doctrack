@@ -1,12 +1,15 @@
 using System;
 using System.IO;
 using System.Linq;
+using System.Text;
+using System.Xml;
 using System.Collections.Generic;
 using DocumentFormat.OpenXml;
 using DocumentFormat.OpenXml.Packaging;
 using DocumentFormat.OpenXml.Spreadsheet;
 using A = DocumentFormat.OpenXml.Drawing;
 using xdr = DocumentFormat.OpenXml.Drawing.Spreadsheet;
+using Drawing = DocumentFormat.OpenXml.Spreadsheet.Drawing;
 
 
 namespace doctrack
@@ -34,7 +37,7 @@ namespace doctrack
             if (drawingsPart.WorksheetDrawing == null)
             {
                 id = 1;
-            }    
+            }
             else
             {
                 id = Convert.ToUInt32(drawingsPart.WorksheetDrawing.Count()) + 1;
@@ -49,7 +52,7 @@ namespace doctrack
             {
                 GenerateDrawingsPart1Content(drawingsPart, extRel.Id, id, rInt, 0, rInt, 0, true, 0, 0);
             }
- 
+
             wsPart.GetIdOfPart(drawingsPart);
             List<string> drawingsList = new List<string>();
             foreach (var drawing in wsPart.Worksheet.Elements<Drawing>())
@@ -81,12 +84,12 @@ namespace doctrack
                 worksheetDrawing1 = new xdr.WorksheetDrawing();
                 worksheetDrawing1.AddNamespaceDeclaration("xdr", "http://schemas.openxmlformats.org/drawingml/2006/spreadsheetDrawing");
                 worksheetDrawing1.AddNamespaceDeclaration("a", "http://schemas.openxmlformats.org/drawingml/2006/main");
-            }    
+            }
             else
             {
                 worksheetDrawing1 = drawingsPart1.WorksheetDrawing;
             }
-                
+
             xdr.TwoCellAnchor twoCellAnchor1 = new xdr.TwoCellAnchor() { EditAs = xdr.EditAsValues.OneCell };
             xdr.FromMarker fromMarker1 = new xdr.FromMarker();
             xdr.ColumnId columnId1 = new xdr.ColumnId();
@@ -186,6 +189,72 @@ namespace doctrack
                 drawingsPart1.WorksheetDrawing = worksheetDrawing1;
             }
         }
-    }
 
+        public static OpenXmlPackage Create(string filename, string ext)
+        {
+            OpenXmlPackage package;
+            SpreadsheetDocumentType type;
+            switch (ext)
+            {
+                case ".xlsx":
+                    type = SpreadsheetDocumentType.Workbook;
+                    break;
+                case ".xlsm":
+                    type = SpreadsheetDocumentType.MacroEnabledWorkbook;
+                    break;
+                case ".xltm":
+                    type = SpreadsheetDocumentType.MacroEnabledTemplate;
+                    break;
+                case ".xltx":
+                    type = SpreadsheetDocumentType.Template;
+                    break;
+                default:
+                    return null;
+            }
+
+            using (var document = SpreadsheetDocument.Create(filename, type))
+            {
+                var workbookPart = document.AddWorkbookPart();
+                workbookPart.Workbook = new Workbook();
+                WorksheetPart worksheetPart = workbookPart.AddNewPart<WorksheetPart>();
+                worksheetPart.Worksheet = new Worksheet(new SheetData());
+                var sheets = document.WorkbookPart.Workbook.AppendChild(new Sheets());
+                Sheet sheet = new Sheet()
+                {
+                    Id = document.WorkbookPart.
+                    GetIdOfPart(worksheetPart),
+                    SheetId = 1,
+                    Name = "Sheet1"
+                };
+                sheets.Append(sheet);
+                workbookPart.Workbook.Save();
+
+                var coreProps = document.AddCoreFilePropertiesPart();
+                Utils.AddCoreFileProperties(coreProps);
+                var extendedProps = document.AddExtendedFilePropertiesPart();
+                AddExtendedFileProperties(extendedProps);
+
+                package = document.Clone();
+            }
+            return package;
+        }
+        
+        public static void AddExtendedFileProperties(ExtendedFilePropertiesPart part)
+        {
+            using (var writer = new XmlTextWriter(part.GetStream(FileMode.Create), Encoding.UTF8))
+            {
+                writer.WriteRaw(
+                    "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?>\r\n"+
+                    "<Properties xmlns=\"http://schemas.openxmlformats.org/officeDocument/2006/extended-properties\" "+
+                    "xmlns:vt=\"http://schemas.openxmlformats.org/officeDocument/2006/docPropsVTypes\">"+
+                    "<Application>Microsoft Excel</Application><DocSecurity>0</DocSecurity><ScaleCrop>false</ScaleCrop>"+
+                    "<HeadingPairs><vt:vector size=\"2\" baseType=\"variant\"><vt:variant><vt:lpstr>Worksheets</vt:lpstr></vt:variant>"+
+                    "<vt:variant><vt:i4>1</vt:i4></vt:variant></vt:vector></HeadingPairs>"+
+                    "<TitlesOfParts><vt:vector size=\"1\" baseType=\"lpstr\"><vt:lpstr>Sheet1</vt:lpstr></vt:vector></TitlesOfParts>"+
+                    "<Company></Company><LinksUpToDate>false</LinksUpToDate><SharedDoc>false</SharedDoc><HyperlinksChanged>false</HyperlinksChanged>"+
+                    "<AppVersion>16.0300</AppVersion></Properties>");
+                writer.Flush();
+            }
+        }
+    }
 }

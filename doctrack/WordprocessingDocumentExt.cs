@@ -1,6 +1,8 @@
 ﻿using System;
 using System.IO;
 using System.Linq;
+using System.Text;
+using System.Xml;
 using DocumentFormat.OpenXml;
 using DocumentFormat.OpenXml.Packaging;
 using DocumentFormat.OpenXml.Wordprocessing;
@@ -13,7 +15,6 @@ namespace doctrack
 {
     public static class WordprocessingDocumentExt
     {
-
         public static void InsertTemplateURI(this WordprocessingDocument document, string url)
         {
             MainDocumentPart mainPart = document.MainDocumentPart;
@@ -114,6 +115,63 @@ namespace doctrack
                 });
 
             return element;
+        }
+
+        public static OpenXmlPackage Create(string filename, string ext)
+        {
+            OpenXmlPackage package;
+            WordprocessingDocumentType type;
+            switch (ext)
+            {
+                case ".docx":
+                    type = WordprocessingDocumentType.Document;
+                    break;
+                case ".docm":
+                    type = WordprocessingDocumentType.MacroEnabledDocument;
+                    break;
+                case ".dotm":
+                    type = WordprocessingDocumentType.MacroEnabledTemplate;
+                    break;
+                case ".dotx":
+                    type = WordprocessingDocumentType.Template;
+                    break;
+                default:
+                    return null;
+            }
+
+            using (var document = WordprocessingDocument.Create(filename, type))
+            {
+                var mainDocumentPart = document.AddMainDocumentPart();
+                mainDocumentPart.Document = new Document();
+                Body body = mainDocumentPart.Document.AppendChild(new Body());
+                body.AppendChild(new Paragraph());
+
+                var coreProps = document.AddCoreFilePropertiesPart();
+                Utils.AddCoreFileProperties(coreProps);
+                var extendedProps = document.AddExtendedFilePropertiesPart();
+                AddExtendedFileProperties(extendedProps);
+
+                package = document.Clone();
+            }
+
+            return package;
+        }
+
+        public static void AddExtendedFileProperties(ExtendedFilePropertiesPart part)
+        {
+            using (var writer = new XmlTextWriter(part.GetStream(FileMode.Create), Encoding.UTF8))
+            {
+                writer.WriteRaw(
+                    "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?>\r\n" +
+                    "<Properties xmlns=\"http://schemas.openxmlformats.org/officeDocument/2006/extended-properties\" " +
+                    "xmlns:vt=\"http://schemas.openxmlformats.org/officeDocument/2006/docPropsVTypes\">" +
+                    "<Template>Normal</Template><TotalTime>0</TotalTime><Pages>1</Pages><Words>0</Words><Characters>0</Characters>" +
+                    "<Application>Microsoft Office Word</Application><DocSecurity>0</DocSecurity><Lines>0</Lines><Paragraphs>0</Paragraphs>" +
+                    "<ScaleCrop>false</ScaleCrop><Company></Company><LinksUpToDate>false</LinksUpToDate>" +
+                    "<CharactersWithSpaces>0</CharactersWithSpaces><SharedDoc>false</SharedDoc><HyperlinksChanged>false</HyperlinksChanged>" +
+                    "<AppVersion>16.0000</AppVersion></Properties>");
+                writer.Flush();
+            }
         }
     }
 }

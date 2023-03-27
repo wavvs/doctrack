@@ -1,8 +1,9 @@
 ﻿# Doctrack
 Tool to manipulate and weaponize Office Open XML documents.
 ## Features
-* Insert tracking pixels into Office Open XML documents (Word, Excel)
-* Inject template URL (aka Remote Template Injection)
+* Create Office Open XML documents (Word, Excel)
+* Insert tracking pixels and UNC paths
+* Remote Template injection
 * Insert CustomXML parts
 * Inspect external target URLs, metadata and Custom XML parts
 ## Installation
@@ -21,7 +22,7 @@ $ dotnet publish -r linux-x64 -c Release /p:PublishSingleFile=true
 $ doctrack --help
 Tool to manipulate and weaponize Office Open XML documents.
 
-  -i, --input          Input filename.
+  -i, --input          Input filename. If doesn't exist, new file is created.
   -o, --output         Output filename. If not set, document is saved as --input
                        file.
   -m, --metadata       Metadata to supply (JSON file).
@@ -30,6 +31,10 @@ Tool to manipulate and weaponize Office Open XML documents.
   -s, --inspect        (Default: false) Inspect document.
   -c, --custom-part    Insert a Custom XML part (XML file)
   --help               Display this help screen.
+```
+Create a Word document and change document metadata:
+```cmd
+$ doctrack -i test.docx -m metadata.json
 ```
 Insert a tracking pixel and change document metadata:
 ```cmd
@@ -56,7 +61,7 @@ Title: doctrack
 Subject:
 Category:
 Keywords:
-Description: Tool to insert tracking pixels into Office Open XML documents.
+Description:
 ContentType:
 ContentStatus:
 Version:
